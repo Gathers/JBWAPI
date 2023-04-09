@@ -256,6 +256,13 @@ final class AreaInitializer extends Area {
     void createBases(final TerrainData terrainData) {
         final TilePosition resourceDepotDimensions = UnitType.Terran_Command_Center.tileSize();
 
+        final Queue<TilePosition> remainingStartingLocations = new LinkedList<>();
+        for (final TilePosition startingLocation : terrainData.getMapData().getStartingLocations()) {
+            if (terrainData.getTile(startingLocation, CheckMode.NO_CHECK).getAreaId().equals(getId())) {
+                remainingStartingLocations.add(startingLocation);
+            }
+        }
+
         final List<Resource> remainingResources = new ArrayList<>();
 
         for (final Mineral mineral : getMinerals()) {
@@ -376,21 +383,26 @@ final class AreaInitializer extends Area {
             }
 
             // 4) Search the best location inside the SearchBoundingBox:
-            TilePosition bestLocation = null;
+            TilePosition bestLocation = remainingStartingLocations.poll();
             int bestScore = 0;
             final List<Mineral> blockingMinerals = new ArrayList<>();
 
-            for (int y = topLeftSearchBoundingBox.getY(); y <= bottomRightSearchBoundingBox.getY();
-                ++y) {
-                for (int x = topLeftSearchBoundingBox.getX();
-                    x <= bottomRightSearchBoundingBox.getX();
-                    ++x) {
-                    final int score = computeBaseLocationScore(terrainData, new TilePosition(x, y));
-                    if (score > bestScore && validateBaseLocation(terrainData,
-                        new TilePosition(x, y),
-                        blockingMinerals)) {
-                        bestScore = score;
-                        bestLocation = new TilePosition(x, y);
+            if (bestLocation != null) {
+                bestScore = computeBaseLocationScore(terrainData, bestLocation);
+                validateBaseLocation(terrainData, bestLocation, blockingMinerals);
+            } else {
+                for (int y = topLeftSearchBoundingBox.getY(); y <= bottomRightSearchBoundingBox.getY();
+                    ++y) {
+                    for (int x = topLeftSearchBoundingBox.getX();
+                        x <= bottomRightSearchBoundingBox.getX();
+                        ++x) {
+                        final int score = computeBaseLocationScore(terrainData, new TilePosition(x, y));
+                        if (score > bestScore && validateBaseLocation(terrainData,
+                            new TilePosition(x, y),
+                            blockingMinerals)) {
+                            bestScore = score;
+                            bestLocation = new TilePosition(x, y);
+                        }
                     }
                 }
             }
