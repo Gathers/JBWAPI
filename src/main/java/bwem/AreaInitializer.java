@@ -256,6 +256,8 @@ final class AreaInitializer extends Area {
     void createBases(final TerrainData terrainData) {
         final TilePosition resourceDepotDimensions = UnitType.Terran_Command_Center.tileSize();
 
+        final List<TilePosition> remainingStartingLocations = new ArrayList<>(terrainData.getMapData().getStartingLocations());
+
         final List<Resource> remainingResources = new ArrayList<>();
 
         for (final Mineral mineral : getMinerals()) {
@@ -380,17 +382,23 @@ final class AreaInitializer extends Area {
             int bestScore = 0;
             final List<Mineral> blockingMinerals = new ArrayList<>();
 
-            for (int y = topLeftSearchBoundingBox.getY(); y <= bottomRightSearchBoundingBox.getY();
-                ++y) {
-                for (int x = topLeftSearchBoundingBox.getX();
-                    x <= bottomRightSearchBoundingBox.getX();
-                    ++x) {
-                    final int score = computeBaseLocationScore(terrainData, new TilePosition(x, y));
-                    if (score > bestScore && validateBaseLocation(terrainData,
-                        new TilePosition(x, y),
-                        blockingMinerals)) {
-                        bestScore = score;
-                        bestLocation = new TilePosition(x, y);
+            if (!remainingStartingLocations.isEmpty()) {
+                bestLocation = remainingStartingLocations.remove(0);
+                bestScore = computeBaseLocationScore(terrainData, bestLocation);
+                validateBaseLocation(terrainData, bestLocation, blockingMinerals);
+            } else {
+                for (int y = topLeftSearchBoundingBox.getY(); y <= bottomRightSearchBoundingBox.getY();
+                    ++y) {
+                    for (int x = topLeftSearchBoundingBox.getX();
+                        x <= bottomRightSearchBoundingBox.getX();
+                        ++x) {
+                        final int score = computeBaseLocationScore(terrainData, new TilePosition(x, y));
+                        if (score > bestScore && validateBaseLocation(terrainData,
+                            new TilePosition(x, y),
+                            blockingMinerals)) {
+                            bestScore = score;
+                            bestLocation = new TilePosition(x, y);
+                        }
                     }
                 }
             }
