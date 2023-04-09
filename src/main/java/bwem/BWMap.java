@@ -90,7 +90,7 @@ public abstract class BWMap {
             }
         }
 
-        if (atLeastOneFailed) {
+        if (atLeastOneFailed && game.isMultiplayer()) {
             asserter.throwIllegalStateException("At least one starting location was not assigned to a base.");
         }
     }
